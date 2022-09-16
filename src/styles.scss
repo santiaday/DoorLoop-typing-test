@@ -1,0 +1,229 @@
+html , body {
+    background-color: #2F3E83;
+    font-family: 'Lato', sans-serif;
+  }
+  
+  .container {
+    height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  }
+  
+  .content {
+    text-align: center;
+    color: #FFFFFF;
+  }
+  
+  .h1Styles {
+    font-size: 3.5rem;
+    text-decoration: underline #FF4998;
+  }
+  
+  .h2Styles {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+  
+
+
+  .customButton {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    outline: none;
+    border: 0;
+    vertical-align: middle;
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+    font-family: inherit;
+    &.startText {
+      width: 12rem;
+      height: auto;
+      .circle {
+        transition: all 0.45s cubic-bezier(0.65,0,.076,1);
+        position: relative;
+        display: block;
+        margin: 0;
+        width: 3rem;
+        height: 3rem;
+        background: #FF4998;
+        border-radius: 1.625rem;
+        .icon {
+            transition: all 0.45s cubic-bezier(0.65,0,.076,1);
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          margin: auto;
+          background: #FFFFFF;
+          &.arrow {
+            transition: all 0.45s cubic-bezier(0.65,0,.076,1);
+            left: 0.625rem;
+            width: 1.125rem;
+            height: 0.125rem;
+            background: none;
+            &::before {
+              position: absolute;
+              content: '';
+              top: -0.25rem;
+              right: 0.0625rem;
+              width: 0.625rem;
+              height: 0.625rem;
+              border-top: 0.125rem solid #fff;
+              border-right: 0.125rem solid #fff;
+              transform: rotate(45deg);
+            }
+          }
+        }
+      }
+      .buttonText {
+        transition: all 0.45s cubic-bezier(0.65,0,.076,1);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 0.75rem 0;
+        margin: 0 0 0 1.85rem;
+        color: #FFFFFF;
+        font-weight: 700;
+        line-height: 1.6;
+        text-align: center;
+        text-transform: uppercase;
+      }
+    }
+    &:hover {
+      .circle {
+        width: 100%;
+        .icon {
+          &.arrow {
+          background: #FFFFFF;
+          transform: translate(1rem, 0);
+          }
+        }
+      }
+      .buttonText {
+        color: #FFFFFF;
+      }
+    }
+  }
+
+
+  .current-word {
+    color: red;
+  }
+
+  .textInputContainer {
+    height: 5vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #textInput {
+    position:absolute;
+    opacity: 0;
+    pointer-events: none;
+    width:25%;
+    transition:all 0.6s ease-in;
+    height: 6rem;
+    border-radius: 25px;
+    font-size: 3rem;
+    margin-top: 20px;
+    padding: 0px 15px 0px 15px;
+    font-family: inherit;
+    border: none;
+    outline: none;
+  }
+
+  #textInput:focus {
+    border: none;
+    box-shadow: none;
+    outline: none;
+  }
+
+  #textInput.active {
+    opacity: 1;
+    pointer-events: all;
+    transition:all 0.6s ease-in;
+}
+
+#startButton.inactive {
+    opacity: 0;
+    pointer-events: none;
+    transition:all 0.6s ease-in;
+}
+
+#timeLeftText {
+    position: absolute;
+    left: 50%;
+    width: 25%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-310px);
+    font-size: 1.5rem;
+}
+
+#timeLeftText.active {
+    opacity: 1;
+    pointer-events: none;
+    transition:all 0.6s ease-in;
+}
+
+.textWordBankWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#wordBank {
+    margin-top: 60px;
+    overflow: hidden;
+    width: 25%;
+}
+
+#words {
+    text-align: justify;
+    margin: 50px 0 30px 0;
+    width: 50%;
+    text-align: center;
+    height: 200px;
+    text-overflow: clip;
+  }
+
+.success {
+  color: #44b267;
+}
+.fail {
+  color: #e81c4e;
+}
+
+.wordsChars {
+    font-size: 4rem;
+    transform: translateY(-200px);
+    margin-bottom: 20px;
+}
+
+#resultsContainer {
+    opacity: 0;
+    width: 100%;
+    transition: all 0.6s;
+    text-align: left;
+}
+
+#resultsContainer.active {
+    opacity: 1;
+    text-align: left;
+    transition: all 0.6s;
+    font-size: 1.5rem;
+}
+
+.resultsHeadings {
+    text-align: left;
+    font-size: 1.5rem;
+}
