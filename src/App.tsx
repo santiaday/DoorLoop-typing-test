@@ -209,10 +209,17 @@ class App extends Component {
     );
 
     //Mapping over the array of words and returning them as HTML elements to be rendered
-    let array = tempWords.map((value) => {
+    let array = tempWords.map((value , i) => {
+
       //wrap the characters in a span tag
+      if(i == 0){
+        return "<span class='wordsChars current-word'>" + value + "</span>";
+      }
+
       return "<span class='wordsChars'>" + value + " </span>";
     });
+
+
 
     //join array for displaying
     wordBank.innerHTML += array.join("");
@@ -242,6 +249,8 @@ class App extends Component {
     if (e.currentTarget.value.includes(" ")) {
       //Checks the target word
       let currentWord = this.state.currentWordIndex;
+      wordChars[this.state.currentWordIndex].classList.remove('current-word');
+
 
       //Checks the accuracy of the word, adds to the correct or incorrect, and adds to the typedWords which keeps track of the total words.
       if (
@@ -265,6 +274,11 @@ class App extends Component {
         incorrectCount: mistakes,
         correctCount: correct,
       });
+
+      if(currentWord < 14){
+        wordChars[currentWord].classList.add('current-word');
+      }
+
 
       //Checks number of words to check if more words need to be rendered or not
       if (currentWord % 14 == 0 && currentWord > 0) {
@@ -319,7 +333,7 @@ class App extends Component {
   handleToggleTextArea() {
     //Grab the elements with jquery
     let input = document.querySelector("#textInput") as HTMLElement;
-    let button = document.querySelector("#startButton") as HTMLElement;
+    let button = document.querySelector("#startButton") as HTMLButtonElement;
     let timeLeftText = document.querySelector("#timeLeftText") as HTMLElement;
 
     //Set buttonClicked state to 1 for scss classes
@@ -329,6 +343,7 @@ class App extends Component {
       //Change element classes to achieve the fade in/fade out look
       input.classList.add("active");
       button.classList.add("inactive");
+      button.disabled = true;
       timeLeftText.classList.add("active");
 
       //Render the first batch of words
@@ -361,10 +376,10 @@ class App extends Component {
             <span className="buttonText">Start</span>
           </button>
           {!this.state.finished ? (
-            <>
-              <span id="timeLeftText">
+            <div id='contentWrapper'>
+              <h2 id="timeLeftText">
                 Time Left: {this.state.seconds} seconds
-              </span>
+              </h2>
               <div className="textWordBankWrapper">
                 <div className="textInputContainer">
                   <input
@@ -376,7 +391,7 @@ class App extends Component {
                 </div>
                 <div id="words"></div>
               </div>
-            </>
+            </div>
           ) : (
             <div id="resultsContainer active">
               <h1>Results: </h1>
