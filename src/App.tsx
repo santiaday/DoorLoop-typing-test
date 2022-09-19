@@ -1,3 +1,4 @@
+import { ChildProcess } from "child_process";
 import React, { ChangeEvent, Component, useEffect } from "react";
 import "./styles.scss";
 
@@ -10,12 +11,14 @@ interface State {
   correctCount: number;
   incorrectCount: number;
   started: boolean;
-  startTime: Date | null;
   wordsPerMinute: number | null;
+  adjustedWordsPerMinute: number | null;
   finished: false;
   seconds: number;
   currentWordIndex: number;
   buttonClicked: number;
+  accuracy: number;
+  speedAnalysis: string;
 }
 
 class App extends Component {
@@ -159,24 +162,58 @@ class App extends Component {
     correctCount: 0,
     incorrectCount: 0,
     started: false,
-    startTime: null,
     wordsPerMinute: null,
+    adjustedWordsPerMinute: null,
     finished: false,
     seconds: 60,
     currentWordIndex: 0,
     buttonClicked: 0,
+    accuracy: 0,
+    speedAnalysis: "",
   };
 
   //Quick method to calculate the wpm using 60 seconds as the default time
-  wordsPerMinute = (charsTyped: number): number =>
-    Math.floor(charsTyped / 5 / 1);
+  wordsPerMinute = (charsTyped: number, accuracy: number): number =>
+    Math.floor((charsTyped / 5) * (accuracy / 100));
 
   //Method to perform all of the necessary logic once the game is finished, including calculations
   checkFinished = (): void => {
-    const charsTyped: number = this.state.typeTest.join("").length;
+    const charsTyped: number =
+      this.state.correctCount + this.state.incorrectCount;
+    const accuracy: number = Math.floor(
+      (this.state.correctCount / charsTyped) * 100
+    );
 
-    const wpm = this.wordsPerMinute(charsTyped);
-    this.setState({ wordsPerMinute: wpm, finished: true });
+    const wpm = this.wordsPerMinute(charsTyped, accuracy);
+
+    //Logic to determine the speed of the user
+
+    if (wpm <= 5) {
+      this.setState({ speedAnalysis: "AFK" });
+    } else if (wpm <= 20) {
+      this.setState({ speedAnalysis: "Slow" });
+    } else if (wpm <= 40) {
+      this.setState({ speedAnalysis: "Below Average" });
+    } else if (wpm <= 50) {
+      this.setState({ speedAnalysis: "Average" });
+    } else if (wpm <= 60) {
+      this.setState({ speedAnalysis: "Above Average" });
+    } else if (wpm <= 70) {
+      this.setState({ speedAnalysis: "Productive" });
+    } else if (wpm <= 90) {
+      this.setState({ speedAnalysis: "Very Fast" });
+    } else if (wpm <= 120) {
+      this.setState({ speedAnalysis: "Competitive" });
+    } else if (wpm <= 200) {
+      this.setState({ speedAnalysis: "Impossible" });
+    }
+
+    this.setState({
+      adjustedWordsPerMinute: wpm,
+      wordsPerMinute: charsTyped / 5,
+      finished: true,
+      accuracy: accuracy,
+    });
   };
 
   //Method to render a new set of words. This is called at the beginning of the game as well as when all of the words on the screen at one time have been typed.
@@ -202,31 +239,46 @@ class App extends Component {
       ];
     }
 
-    //Took only a portion of the generated words to display at one time, since all of the words at one time wont fit
-    let tempWords = newWordBank.slice(
-      this.state.currentWordIndex,
-      this.state.currentWordIndex + 14
-    );
-
     //Mapping over the array of words and returning them as HTML elements to be rendered
-    let array = tempWords.map((value , i) => {
+    let array = newWordBank.map((value, i) => {
+      let htmlCharactersArray: string[] = [];
 
       //wrap the characters in a span tag
-      if(i == 0){
-        return "<span class='wordsChars current-word'>" + value + "</span>";
+      if (i == 0) {
+        for (let j = 0; j <= value.length; j++) {
+          if (j === 0) {
+            htmlCharactersArray.push(
+              "<span class='current-char'>" + value.charAt(j) + "</span>"
+            );
+          } else {
+            htmlCharactersArray.push("<span>" + value.charAt(j) + "</span>");
+          }
+        }
+        return (
+          "<span class='wordsChars current-word'>" +
+          htmlCharactersArray.join("") +
+          " </span>"
+        );
       }
 
-      return "<span class='wordsChars'>" + value + " </span>";
+      for (let j = 0; j <= value.length; j++) {
+        if (j === 0) {
+          htmlCharactersArray.push("<span>" + value.charAt(j) + "</span>");
+        } else {
+          htmlCharactersArray.push("<span>" + value.charAt(j) + "</span>");
+        }
+      }
+      return (
+        "<span class='wordsChars'>" + htmlCharactersArray.join("") + " </span>"
+      );
     });
-
-
 
     //join array for displaying
     wordBank.innerHTML += array.join("");
   }
 
   //Most important method. This runs every time the input is changed. checks things like if spacebar, if first character, if the word is correct/wrong, etc.
-  onWordChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  onWordChange = (e: any): void => {
     //Starts the timer when the user types the first character
     if (!this.state.started) {
       this.setState({ started: true });
@@ -243,42 +295,55 @@ class App extends Component {
     //Initializing variables to the state to later mutate the state (states shouldnt be mutated directly)
     let mistakes = this.state.incorrectCount;
     let correct = this.state.correctCount;
-    let typedWords = this.state.typeTest;
+    let currentWord = this.state.currentWordIndex;
+    let currentChar = e.currentTarget.value.length - 1;
+
+    //Getting the current char as well as the upcoming one to display
+    let currentWordCharacter = document.querySelector(
+      `.current-word :nth-child(${currentChar + 1})`
+    );
+    let upcomingCharacter = document.querySelector(
+      `.current-word :nth-child(${currentChar + 2})`
+    );
+
+    //Making sure that there is only one current char
+    Array.from(document.querySelectorAll(".current-char")).map((node) => {
+      node.classList.remove("current-char");
+    });
+
+    //Adding the current char class as well as removing any other class that it can have
+    upcomingCharacter?.classList.add("current-char");
+    upcomingCharacter?.classList.remove("success");
+    upcomingCharacter?.classList.remove("fail");
+
+    //Changing the class of the element depending on the accuracy of the typed character
+    if (
+      enteredText.trim().charAt(currentChar) ===
+      wordChars[0].innerText.charAt(currentChar)
+    ) {
+      currentWordCharacter?.classList.add("success");
+      currentWordCharacter?.classList.remove("fail");
+    } else {
+      currentWordCharacter?.classList.add("fail");
+      currentWordCharacter?.classList.remove("success");
+    }
 
     //Checks if the user inputted a space to submit the word and check it
-    if (e.currentTarget.value.includes(" ")) {
-      //Checks the target word
-      let currentWord = this.state.currentWordIndex;
-      wordChars[this.state.currentWordIndex].classList.remove('current-word');
-
-
-      //Checks the accuracy of the word, adds to the correct or incorrect, and adds to the typedWords which keeps track of the total words.
-      if (
-        e.currentTarget.value.trim() === wordChars[currentWord].innerText.trim()
-      ) {
-        wordChars[currentWord].classList.add("success");
-        typedWords.push(wordChars[currentWord].innerText.trim());
-        correct++;
-      } else {
-        wordChars[currentWord].classList.add("fail");
-        typedWords.push(wordChars[currentWord].innerText.trim());
-        mistakes++;
-      }
+    if (enteredText.includes(" ")) {
+      //Removes current word class to move onto the next one
+      wordChars[0].remove();
 
       //Moves the currentWord up one index to move onto the next word and sets the states to prepare for the next word.
-      currentWord += 1;
       this.setState({
         currentWordIndex: currentWord,
         enteredText: "",
-        typeTest: typedWords,
-        incorrectCount: mistakes,
-        correctCount: correct,
+        currentCharIndex: 0,
       });
 
-      if(currentWord < 14){
-        wordChars[currentWord].classList.add('current-word');
-      }
-
+      //Moves the current word to the next one and the current char to the first of the next word
+      wordChars[1].classList.add("current-word");
+      let firstChar = wordChars[1]?.firstChild as HTMLElement;
+      firstChar.classList.add("current-char");
 
       //Checks number of words to check if more words need to be rendered or not
       if (currentWord % 14 == 0 && currentWord > 0) {
@@ -297,6 +362,21 @@ class App extends Component {
         this.renderNewWords();
       }
     }
+
+    //Adds to the correct and incorrect variables to calculate the accuracy at the end
+    if (
+      wordChars[this.state.currentWordIndex].innerText.charAt(currentChar) ===
+      enteredText.charAt(currentChar)
+    ) {
+      correct++;
+    } else {
+      if (!enteredText.includes(" ")) {
+        mistakes++;
+      }
+    }
+
+    //Setting the state of the correct and incorrect chars
+    this.setState({ correctCount: correct, incorrectCount: mistakes });
   };
 
   //This method starts the timer and controls some of the element classes to fade in and fade out
@@ -332,7 +412,7 @@ class App extends Component {
 
   handleToggleTextArea() {
     //Grab the elements with jquery
-    let input = document.querySelector("#textInput") as HTMLElement;
+    let input = document.querySelector("#contentWrapper") as HTMLElement;
     let button = document.querySelector("#startButton") as HTMLButtonElement;
     let timeLeftText = document.querySelector("#timeLeftText") as HTMLElement;
 
@@ -351,35 +431,40 @@ class App extends Component {
     }
   }
 
+  //Rendered JSX
   render() {
     return (
       <div className="container">
         <div className="content">
           <h1 className="h1Styles">DoorLoop Typing Test</h1>
-          {this.state.buttonClicked === 0 ? (
-            <h2 className="h2Styles">
-              Press 'Start' to begin the typing test.
-            </h2>
-          ) : this.state.buttonClicked === 1 ? (
-            <h2 className="h2Styles">Start typing to begin the test.</h2>
+          <h2 className="h2Styles">
+            {this.state.buttonClicked === 0 ? (
+              <span>Press 'Start' to begin the typing test.</span>
+            ) : this.state.buttonClicked === 1 ? (
+              <span>Start typing to begin the assessment</span>
+            ) : (
+              <></>
+            )}
+          </h2>
+          {!this.state.buttonClicked ? (
+            <button
+              className="startText customButton"
+              id="startButton"
+              onClick={() => {
+                this.handleToggleTextArea();
+              }}
+            >
+              <span className="circle">
+                <span className="icon arrow"></span>
+              </span>
+              <span className="buttonText">Start</span>
+            </button>
           ) : (
             <></>
           )}
-          <button
-            className="startText customButton"
-            id="startButton"
-            onClick={() => this.handleToggleTextArea()}
-          >
-            <span className="circle">
-              <span className="icon arrow"></span>
-            </span>
-            <span className="buttonText">Start</span>
-          </button>
           {!this.state.finished ? (
-            <div id='contentWrapper'>
-              <h2 id="timeLeftText">
-                Time Left: {this.state.seconds} seconds
-              </h2>
+            <div id="contentWrapper">
+              <h2 id="timeLeftText">Time Left: {this.state.seconds} seconds</h2>
               <div className="textWordBankWrapper">
                 <div className="textInputContainer">
                   <input
@@ -392,7 +477,7 @@ class App extends Component {
                 <div id="words"></div>
               </div>
             </div>
-          ) : (
+          ) : this.state.finished ? (
             <div id="resultsContainer active">
               <h1>Results: </h1>
               <br />
@@ -400,23 +485,23 @@ class App extends Component {
                 WPM: {this.state.wordsPerMinute}
               </h2>
               <h2 className="resultsHeadings">
-                Correct Words: {this.state.correctCount}
+                Adjusted WPM: {this.state.adjustedWordsPerMinute}
               </h2>
               <h2 className="resultsHeadings">
-                Incorrect Words: {this.state.incorrectCount}
+                Correct Characters: {this.state.correctCount}
               </h2>
               <h2 className="resultsHeadings">
-                Accuracy Percentage:{" "}
-                {this.state.typeTest.length > 0
-                  ? Math.floor(
-                      ((this.state.correctCount - this.state.incorrectCount) /
-                        this.state.typeTest.length) *
-                        100
-                    )
-                  : 0}
-                %
+                Incorrect Characters: {this.state.incorrectCount}
+              </h2>
+              <h2 className="resultsHeadings">
+                Accuracy: {this.state.accuracy}%
               </h2>
               <br />
+              <div className="resultsAnalysis">
+                <h1>
+                  Your speed is: <strong>{this.state.speedAnalysis}</strong>
+                </h1>
+              </div>
               <br />
               <button
                 className="startText customButton"
@@ -429,6 +514,8 @@ class App extends Component {
                 <span className="buttonText">Restart</span>
               </button>
             </div>
+          ) : (
+            <></>
           )}
         </div>
       </div>
