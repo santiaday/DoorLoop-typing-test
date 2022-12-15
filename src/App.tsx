@@ -436,7 +436,7 @@ class App extends Component {
     return (
       <div className="container">
         <div className="content">
-          <h1 className="h1Styles">DoorLoop Typing Test</h1>
+          <h1 className="h1Styles">Typing Test</h1>
           <h2 className="h2Styles">
             {this.state.buttonClicked === 0 ? (
               <span>Press 'Start' to begin the typing test.</span>
